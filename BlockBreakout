@@ -1,0 +1,107 @@
+import pygame
+import random
+import sys
+
+pygame.init()
+
+# Game settings
+GRID_WIDTH = 10
+GRID_HEIGHT = 20
+BLOCK_SIZE = 30
+GRID_TOP = 50
+FPS = 60
+BACKGROUND_COLOR = (255, 255, 255)
+BLOCK_COLORS = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+BLOCK_SHAPES = ["square", "line", "L", "reverse_L", "S", "reverse_S", "T"]
+
+# Create the Pygame window
+WINDOW_WIDTH = BLOCK_SIZE * GRID_WIDTH
+WINDOW_HEIGHT = BLOCK_SIZE * GRID_HEIGHT + GRID_TOP
+WINDOW_TITLE = "Block Breakout"
+
+window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption(WINDOW_TITLE)
+clock = pygame.time.Clock()
+
+
+# Block class
+class Block(pygame.sprite.Sprite):
+    def __init__(self, color, x, y):
+        super().__init__()
+        self.image = pygame.Surface((BLOCK_SIZE, BLOCK_SIZE))
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.color = color
+        self.shape = "square"
+
+    def move_left(self):
+        self.rect.x -= BLOCK_SIZE
+
+    def move_right(self):
+        self.rect.x += BLOCK_SIZE
+
+    def move_down(self, speed):
+        self.rect.y += BLOCK_SIZE * speed / FPS
+
+
+# BlockManager class
+class BlockManager:
+    def __init__(self):
+        self.blocks = pygame.sprite.Group()
+        self.current_block = None
+        self.next_block = self.generate_block()
+        self.fall_speed = 1
+
+    @staticmethod
+    def generate_block():
+        # Generate a new block with a random color and shape
+        color = random.choice(BLOCK_COLORS)
+        shape = random.choice(BLOCK_SHAPES)
+        x = BLOCK_SIZE * (GRID_WIDTH // 2 - 1)
+        y = -BLOCK_SIZE
+        block = Block(color, x, y)
+        block.shape = shape
+        return block
+
+    def update(self):
+        if not self.current_block:
+            self.current_block = self.next_block
+            self.next_block = self.generate_block()
+            self.blocks.add(self.current_block)
+        else:
+            self.current_block.move_down(self.fall_speed)
+            if self.current_block.rect.bottom >= GRID_TOP + GRID_HEIGHT * BLOCK_SIZE or check_collision(
+                    self.current_block):
+                self.current_block.rect.y -= BLOCK_SIZE
+                self.blocks.add(self.current_block)
+                self.current_block = None
+                self.clear_lines()
+                if self.check_game_over():
+                    pygame.quit()
+                    sys.exit()
+
+    def clear_lines(self):
+        # Check for complete lines and remove them
+        for y in range(GRID_TOP, GRID_TOP + GRID_HEIGHT * BLOCK_SIZE, BLOCK_SIZE):
+            line = [b for b in self.blocks if b.rect.y == y]
+            if len(line) == GRID_WIDTH:
+                for b in line:
+                    self.blocks.remove(b)
+                for b in self.blocks:
+                    if b.rect.y < y:
+                        b.move_down(1)
+
+    def check_game_over(self):
+        # Check if the game is over
+        for b in self.blocks:
+            if b.rect.y <= GRID_TOP:
+                return True
+        return False
+
+
+# Collision detection function
+def check_collision(block):
+    # Check if a block collides wi'.th the stack or the bottom of the screen
+    if block.rect.bottom >= GRID:"."
